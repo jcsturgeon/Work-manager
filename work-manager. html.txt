@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Work Manager</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; }
+  .container { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 1.5rem; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; border-bottom: 1px solid #e0e0e0; padding-bottom: 0; }
+  .tab { padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; background: none; color: #666; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.active { color: #1a1a1a; border-bottom: 2px solid #1a1a1a; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .add-form { background: #ebebeb; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; }
+  .add-form input, .add-form select { font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid #ccc; background: #fff; color: #1a1a1a; }
+  .add-form input[type=text] { flex: 1; min-width: 160px; }
+  .add-form input[type=date] { min-width: 130px; }
+  .add-form button { padding: 7px 16px; font-size: 14px; font-weight: 500; border-radius: 8px; border: none; background: #1a1a1a; color: #fff; cursor: pointer; }
+  .add-form button:hover { background: #333; }
+
+  .filters { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; }
+  .filters select { font-size: 13px; padding: 5px 10px; border-radius: 8px; border: 1px solid #ccc; background: #fff; color: #1a1a1a; }
+
+  .columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .col { background: #ebebeb; border-radius: 12px; padding: 12px; }
+  .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .col-title { font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.05em; }
+  .col-count { font-size: 12px; background: #fff; border: 1px solid #ddd; border-radius: 99px; padding: 1px 8px; color: #666; }
+
+  .task-card { background: #fff; border-radius: 8px; border: 1px solid #e8e8e8; padding: 10px 12px; margin-bottom: 8px; }
+  .task-title { font-size: 14px; font-weight: 500; color: #1a1a1a; margin-bottom: 6px; }
+  .task-meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+  .badge.alta { background: #fee2e2; color: #991b1b; }
+  .badge.media { background: #fef3c7; color: #92400e; }
+  .badge.baja { background: #dcfce7; color: #166534; }
+  .task-date { font-size: 11px; color: #888; }
+  .task-actions { display: flex; gap: 4px; margin-top: 8px; }
+  .task-actions button { font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #ddd; background: none; color: #555; cursor: pointer; }
+  .task-actions button:hover { background: #f5f5f5; }
+  .task-actions button.danger { color: #991b1b; border-color: #fca5a5; }
+  .empty { font-size: 13px; color: #aaa; text-align: center; padding: 1rem 0; }
+
+  .min-list { margin-bottom: 1.5rem; }
+  .min-card { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 10px; cursor: pointer; }
+  .min-card:hover { border-color: #aaa; }
+  .min-card-header { display: flex; justify-content: space-between; align-items: center; }
+  .min-card-title { font-size: 15px; font-weight: 500; }
+  .min-card-date { font-size: 12px; color: #888; }
+  .min-card-participants { font-size: 12px; color: #888; margin-top: 4px; }
+
+  .min-detail { background: #fff; border: 1px solid #e8e8e8; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .min-detail h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .min-detail .sub { font-size: 13px; color: #888; margin-bottom: 1rem; }
+  .min-section { margin-bottom: 1rem; }
+  .min-section-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .min-section-content { font-size: 14px; color: #1a1a1a; line-height: 1.6; }
+  .next-steps { list-style: none; }
+  .next-steps li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; gap: 8px; }
+  .next-steps li:last-child { border-bottom: none; }
+  .to-task-btn { font-size: 11px; padding: 3px 8px; border-radius: 6px; border: 1px solid #ddd; background: none; color: #1a5fa8; cursor: pointer; white-space: nowrap; }
+  .to-task-btn:hover { background: #eff6ff; }
+
+  .back-btn { font-size: 13px; color: #666; cursor: pointer; margin-bottom: 1rem; display: inline-flex; align-items: center; gap: 4px; background: none; border: none; padding: 0; }
+  .back-btn:hover { color: #1a1a1a; }
+
+  .new-min-form { background: #ebebeb; border-radius: 12px; padding: 1rem; }
+  .new-min-form label { font-size: 12px; font-weight: 600; color: #666; display: block; margin-bottom: 4px; margin-top: 10px; }
+  .new-min-form label:first-of-type { margin-top: 0; }
+  .new-min-form input, .new-min-form textarea { width: 100%; font-size: 14px; padding: 7px 10px; border-radius: 8px; border: 1px solid #ccc; background: #fff; color: #1a1a1a; font-family: inherit; }
+  .new-min-form textarea { resize: vertical; min-height: 70px; line-height: 1.5; }
+  .form-row { display: flex; gap: 8px; }
+  .form-row > div { flex: 1; }
+  .save-btn { margin-top: 12px; padding: 8px 20px; font-size: 14px; font-weight: 500; border-radius: 8px; border: none; background: #1a1a1a; color: #fff; cursor: pointer; }
+  .save-btn:hover { background: #333; }
+
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: #1a1a1a; color: #fff; font-size: 13px; padding: 8px 16px; border-radius: 8px; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Work Manager</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('tasks', this)">Tareas</button>
+    <button class="tab" onclick="switchTab('minutes', this)">Minutas</button>
+  </div>
+
+  <div id="tasks-section" class="section active">
+    <div class="add-form">
+      <input type="text" id="task-title" placeholder="Nueva tarea..." />
+      <select id="task-priority">
+        <option value="alta">Prioridad alta</option>
+        <option value="media" selected>Prioridad media</option>
+        <option value="baja">Prioridad baja</option>
+      </select>
+      <input type="date" id="task-date" />
+      <button onclick="addTask()">Agregar</button>
+    </div>
+    <div class="filters">
+      <select id="filter-status" onchange="renderTasks()">
+        <option value="all">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="progreso">En progreso</option>
+        <option value="completada">Completada</option>
+      </select>
+      <select id="filter-priority" onchange="renderTasks()">
+        <option value="all">Todas las prioridades</option>
+        <option value="alta">Alta</option>
+        <option value="media">Media</option>
+        <option value="baja">Baja</option>
+      </select>
+    </div>
+    <div class="columns">
+      <div class="col">
+        <div class="col-header"><span class="col-title">Pendiente</span><span class="col-count" id="cnt-pendiente">0</span></div>
+        <div id="col-pendiente"></div>
+      </div>
+      <div class="col">
+        <div class="col-header"><span class="col-title">En progreso</span><span class="col-count" id="cnt-progreso">0</span></div>
+        <div id="col-progreso"></div>
+      </div>
+      <div class="col">
+        <div class="col-header"><span class="col-title">Completada</span><span class="col-count" id="cnt-completada">0</span></div>
+        <div id="col-completada"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="minutes-section" class="section">
+    <div id="min-list-view">
+      <div class="min-list" id="min-list"></div>
+      <div class="new-min-form">
+        <div class="form-row">
+          <div>
+            <label>Título de la reunión</label>
+            <input type="text" id="min-title" placeholder="Ej: Reunión de equipo semanal" />
+          </div>
+          <div style="max-width:160px">
+            <label>Fecha</label>
+            <input type="date" id="min-date" />
+          </div>
+        </div>
+        <label>Participantes</label>
+        <input type="text" id="min-participants" placeholder="Ej: Ana, Carlos, Lucía" />
+        <label>Temas tratados</label>
+        <textarea id="min-topics" placeholder="Resumí los temas que se discutieron..."></textarea>
+        <label>Decisiones tomadas</label>
+        <textarea id="min-decisions" placeholder="¿Qué se decidió?"></textarea>
+        <label>Próximos pasos (uno por línea)</label>
+        <textarea id="min-nextsteps" placeholder="Ej: Revisar propuesta comercial&#10;Enviar informe al cliente"></textarea>
+        <button class="save-btn" onclick="saveMinute()">Guardar minuta</button>
+      </div>
+    </div>
+    <div id="min-detail-view" style="display:none"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  let tasks = [], minutes = [], taskId = 0, minId = 0;
+
+  function load() {
+    try { const d = JSON.parse(localStorage.getItem('wm-tasks') || '{}'); tasks = d.tasks || []; taskId = d.nextId || 0; } catch(e) {}
+    try { const d = JSON.parse(localStorage.getItem('wm-minutes') || '{}'); minutes = d.minutes || []; minId = d.nextId || 0; } catch(e) {}
+    renderTasks(); renderMinutes();
+  }
+
+  function saveTasks() { localStorage.setItem('wm-tasks', JSON.stringify({tasks, nextId: taskId})); }
+  function saveMinutes() { localStorage.setItem('wm-minutes', JSON.stringify({minutes, nextId: minId})); }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  }
+
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(tab + '-section').classList.add('active');
+  }
+
+  function addTask(title, priority, date, status) {
+    title = title || document.getElementById('task-title').value.trim();
+    if (!title) return;
+    priority = priority || document.getElementById('task-priority').value;
+    date = date !== undefined ? date : document.getElementById('task-date').value;
+    status = status || 'pendiente';
+    tasks.push({ id: ++taskId, title, priority, date, status });
+    saveTasks();
+    document.getElementById('task-title').value = '';
+    document.getElementById('task-date').value = '';
+    renderTasks(); showToast('Tarea agregada');
+  }
+
+  function moveTask(id, dir) {
+    const order = ['pendiente', 'progreso', 'completada'];
+    const t = tasks.find(t => t.id === id); if (!t) return;
+    const i = order.indexOf(t.status);
+    if (dir === 1 && i < 2) t.status = order[i+1];
+    if (dir === -1 && i > 0) t.status = order[i-1];
+    saveTasks(); renderTasks();
+  }
+
+  function deleteTask(id) {
+    tasks = tasks.filter(t => t.id !== id);
+    saveTasks(); renderTasks(); showToast('Tarea eliminada');
+  }
+
+  function formatDate(d) {
+    if (!d) return '';
+    const [y,m,day] = d.split('-'); return `${day}/${m}/${y}`;
+  }
+
+  function renderTasks() {
+    const fs = document.getElementById('filter-status').value;
+    const fp = document.getElementById('filter-priority').value;
+    ['pendiente','progreso','completada'].forEach(col => {
+      const filtered = tasks.filter(t => t.status === col && (fs==='all'||t.status===fs) && (fp==='all'||t.priority===fp));
+      document.getElementById('cnt-'+col).textContent = filtered.length;
+      const el = document.getElementById('col-'+col);
+      if (!filtered.length) { el.innerHTML = '<div class="empty">Sin tareas</div>'; return; }
+      el.innerHTML = filtered.map(t => `
+        <div class="task-card">
+          <div class="task-title">${t.title}</div>
+          <div class="task-meta">
+            <span class="badge ${t.priority}">${t.priority}</span>
+            ${t.date ? `<span class="task-date">${formatDate(t.date)}</span>` : ''}
+          </div>
+          <div class="task-actions">
+            ${col!=='pendiente' ? `<button onclick="moveTask(${t.id},-1)">← Atrás</button>` : ''}
+            ${col!=='completada' ? `<button onclick="moveTask(${t.id},1)">Avanzar →</button>` : ''}
+            <button class="danger" onclick="deleteTask(${t.id})">Eliminar</button>
+          </div>
+        </div>`).join('');
+    });
+  }
+
+  function saveMinute() {
+    const title = document.getElementById('min-title').value.trim();
+    if (!title) return;
+    const date = document.getElementById('min-date').value;
+    const participants = document.getElementById('min-participants').value.trim();
+    const topics = document.getElementById('min-topics').value.trim();
+    const decisions = document.getElementById('min-decisions').value.trim();
+    const nextsteps = document.getElementById('min-nextsteps').value.trim().split('\n').filter(s => s.trim());
+    minutes.unshift({ id: ++minId, title, date, participants, topics, decisions, nextsteps });
+    saveMinutes();
+    ['min-title','min-date','min-participants','min-topics','min-decisions','min-nextsteps'].forEach(id => document.getElementById(id).value = '');
+    renderMinutes(); showToast('Minuta guardada');
+  }
+
+  function renderMinutes() {
+    const el = document.getElementById('min-list');
+    if (!minutes.length) { el.innerHTML = '<div class="empty" style="margin-bottom:1rem">Sin minutas guardadas</div>'; return; }
+    el.innerHTML = minutes.map(m => `
+      <div class="min-card" onclick="showMinute(${m.id})">
+        <div class="min-card-header">
+          <span class="min-card-title">${m.title}</span>
+          <span class="min-card-date">${m.date ? formatDate(m.date) : ''}</span>
+        </div>
+        ${m.participants ? `<div class="min-card-participants">Participantes: ${m.participants}</div>` : ''}
+      </div>`).join('');
+  }
+
+  function showMinute(id) {
+    const m = minutes.find(m => m.id === id); if (!m) return;
+    const dv = document.getElementById('min-detail-view');
+    dv.innerHTML = `
+      <button class="back-btn" onclick="hideMinute()">← Volver</button>
+      <div class="min-detail">
+        <h3>${m.title}</h3>
+        <div class="sub">${m.date ? formatDate(m.date)+' · ' : ''}${m.participants||''}</div>
+        ${m.topics ? `<div class="min-section"><div class="min-section-title">Temas tratados</div><div class="min-section-content">${m.topics}</div></div>` : ''}
+        ${m.decisions ? `<div class="min-section"><div class="min-section-title">Decisiones tomadas</div><div class="min-section-content">${m.decisions}</div></div>` : ''}
+        ${m.nextsteps&&m.nextsteps.length ? `
+          <div class="min-section">
+            <div class="min-section-title">Próximos pasos</div>
+            <ul class="next-steps">
+              ${m.nextsteps.map(s=>`
+                <li>
+                  <span>${s}</span>
+                  <button class="to-task-btn" onclick="stepToTask('${encodeURIComponent(s)}')">+ Crear tarea</button>
+                </li>`).join('')}
+            </ul>
+          </div>` : ''}
+      </div>`;
+    document.getElementById('min-list-view').style.display = 'none';
+    dv.style.display = 'block';
+  }
+
+  function hideMinute() {
+    document.getElementById('min-list-view').style.display = 'block';
+    document.getElementById('min-detail-view').style.display = 'none';
+  }
+
+  function stepToTask(encoded) {
+    const title = decodeURIComponent(encoded);
+    tasks.push({ id: ++taskId, title, priority: 'media', date: '', status: 'pendiente' });
+    saveTasks();
+    document.querySelectorAll('.tab')[0].click();
+    renderTasks(); showToast('Tarea creada desde minuta');
+  }
+
+  load();
+</script>
+</body>
+</html>
